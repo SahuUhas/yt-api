@@ -1,5 +1,4 @@
 import asyncio
-import hashlib
 import os
 import re
 import shutil
@@ -13,17 +12,19 @@ from urllib.parse import urlparse
 import yt_dlp
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import BackgroundTask, FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from starlette.background import BackgroundTask
 from pydantic import BaseModel, Field
 
 
 APP_NAME = "YouTube Downloader API"
-VERSION = "3.0.0"
+VERSION = "1.0.0"
+AUTHOR = "SAHU UHAS"
 
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("SERVER_PORT", "30127")))
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 INDEX_FILE = BASE_DIR / "index.html"
 
 STORAGE_DIR = Path(
@@ -95,6 +96,7 @@ YOUTUBE_HOSTS = {
 
 
 class DownloadRequest(BaseModel):
+
     url: Optional[str] = None
 
     videoId: Optional[str] = None
@@ -130,28 +132,6 @@ def raise_api_error(
         detail=error_response(
             code,
             message
-        )
-    )
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(
-    request,
-    exc: HTTPException
-):
-
-    if isinstance(exc.detail, dict):
-
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=exc.detail
-        )
-
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=error_response(
-            "HTTP_ERROR",
-            str(exc.detail)
         )
     )
 
@@ -867,8 +847,7 @@ app = FastAPI(
     title=APP_NAME,
     version=VERSION,
     description=(
-        "Fast YouTube downloader API "
-        "powered by yt-dlp and FFmpeg."
+        "Fast YouTube downloader API."
     ),
     lifespan=lifespan
 )
@@ -885,6 +864,28 @@ app.add_middleware(
 
     allow_headers=["*"]
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(
+    request,
+    exc: HTTPException
+):
+
+    if isinstance(exc.detail, dict):
+
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=exc.detail
+        )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=error_response(
+            "HTTP_ERROR",
+            str(exc.detail)
+        )
+    )
 
 
 @app.get("/")
@@ -923,7 +924,10 @@ async def health():
                 APP_NAME,
 
             "version":
-                VERSION
+                VERSION,
+
+            "author":
+                AUTHOR
         },
 
         "yt_dlp":
@@ -977,8 +981,8 @@ async def api_info():
         "version":
             VERSION,
 
-        "engine":
-            "yt-dlp + FFmpeg",
+        "author":
+            AUTHOR,
 
         "supported_site":
             "YouTube",
@@ -1338,6 +1342,21 @@ async def get_job(
     )
 
 
+def delete_file_after_response(
+    path: Path
+):
+
+    try:
+
+        path.unlink(
+            missing_ok=True
+        )
+
+    except OSError:
+
+        pass
+
+
 @app.get(
     "/files/{filename}"
 )
@@ -1419,21 +1438,6 @@ async def get_file(
         filename=path.name,
         background=cleanup
     )
-
-
-def delete_file_after_response(
-    path: Path
-):
-
-    try:
-
-        path.unlink(
-            missing_ok=True
-        )
-
-    except OSError:
-
-        pass
 
 
 if __name__ == "__main__":
