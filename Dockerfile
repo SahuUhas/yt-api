@@ -18,13 +18,17 @@ WORKDIR /app
 COPY requirements.txt .
 
 RUN python -m pip install --upgrade pip \
-    && pip install --upgrade yt-dlp \
-    && pip install -r requirements.txt
+    && python -m pip install --upgrade yt-dlp \
+    && python -m pip install -r requirements.txt
 
 COPY main.py .
+COPY templates ./templates
 
 RUN mkdir -p /data \
-    && useradd --create-home --uid 10001 appuser \
+    && useradd \
+        --create-home \
+        --uid 10001 \
+        appuser \
     && chown -R appuser:appuser /app /data
 
 USER appuser
