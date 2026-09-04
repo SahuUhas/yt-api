@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Downloader API</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #697386;
+      --border: #e5e7eb;
+      --primary: #111827;
+      --success: #087443;
+      --danger: #b42318;
+      --radius: 18px;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .container {
+      width: min(100%, 1050px);
+      margin: auto;
+      padding: 20px 15px 60px;
+    }
+
+    .hero {
+      background: var(--primary);
+      color: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: clamp(25px, 5vw, 36px);
+    }
+
+    .hero p {
+      margin: 0;
+      color: #aeb6c5;
+    }
+
+    .base-url {
+      margin-top: 15px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .08);
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-top: 16px;
+      box-shadow: 0 8px 28px rgba(16, 24, 40, .05);
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 20px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #98a2b3;
+      flex: 0 0 auto;
+    }
+
+    .dot.online {
+      background: #12b76a;
+    }
+
+    .dot.offline {
+      background: #f04438;
+    }
+
+    label {
+      display: block;
+      margin: 13px 0 7px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      border: 1px solid #d0d5dd;
+      border-radius: 11px;
+      padding: 12px 13px;
+      outline: none;
+      background: white;
+      color: var(--text);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: #667085;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 170px;
+      gap: 10px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 13px;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 11px 16px;
+      background: var(--primary);
+      color: white;
+      font-weight: 700;
+    }
+
+    .btn.secondary {
+      background: #eef2f6;
+      color: #172033;
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .result {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 15px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    .thumbnail {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #e5e7eb;
+    }
+
+    .result h3 {
+      margin: 2px 0 7px;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .progress-wrap {
+      margin-top: 15px;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .progress {
+      height: 13px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e9edf2;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: #111827;
+      transition: width .25s ease;
+    }
+
+    .job-info {
+      margin-top: 13px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .info-box {
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: #fafafa;
+    }
+
+    .info-box small {
+      display: block;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .info-box strong {
+      word-break: break-word;
+    }
+
+    .preview {
+      margin-top: 16px;
+    }
+
+    video,
+    audio {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 12px;
+      background: #000;
+    }
+
+    .message {
+      padding: 12px 14px;
+      margin-top: 12px;
+      border-radius: 11px;
+      background: #f2f4f7;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .message.success {
+      color: var(--success);
+      background: #ecfdf3;
+    }
+
+    .message.error {
+      color: var(--danger);
+      background: #fef3f2;
+    }
+
+    pre {
+      margin: 0;
+      padding: 15px;
+      min-height: 100px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1020;
+      color: #d1d5db;
+      border-radius: 12px;
+      font-size: 13px;
+    }
+
+    .endpoint {
+      padding: 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+
+    .endpoint code {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .endpoint span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .loading {
+      opacity: .7;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .result {
+        grid-template-columns: 1fr;
+      }
+
+      .thumbnail {
+        max-height: 220px;
+      }
+
+      .job-info {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding: 22px 18px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <section class="hero">
+    <h1>▶ YouTube Downloader API</h1>
+    <p>Search, download, preview and test the API.</p>
+
+    <div class="base-url">
+      API Base URL:
+      <strong id="baseUrl"></strong>
+    </div>
+  </section>
+
+
+  <!-- API STATUS -->
+  <section class="card">
+
+    <h2>API Status</h2>
+
+    <div id="healthStatus" class="status">
+      <span id="healthDot" class="dot"></span>
+      <span id="healthText">Checking API...</span>
+    </div>
+
+  </section>
+
+
+  <!-- SEARCH -->
+  <section class="card">
+
+    <h2>YouTube Search</h2>
+
+    <label for="searchInput">
+      Search YouTube
+    </label>
+
+    <input
+      id="searchInput"
+      type="text"
+      maxlength="200"
+      placeholder="Example: Alan Walker Faded"
+      autocomplete="off"
+    >
+
+    <div class="buttons">
+
+      <button
+        id="searchButton"
+        class="btn"
+        onclick="searchYouTube()"
+      >
+        Search
+      </button>
+
+    </div>
+
+    <div id="searchMessage"></div>
+
+    <div
+      id="results"
+      class="results"
+    ></div>
+
+  </section>
+
+
+  <!-- DOWNLOADER -->
+  <section class="card">
+
+    <h2>Downloader</h2>
+
+    <label for="urlInput">
+      YouTube URL
+    </label>
+
+    <input
+      id="urlInput"
+      type="url"
+      placeholder="https://www.youtube.com/watch?v=..."
+      autocomplete="off"
+    >
+
+    <label for="formatSelect">
+      Format
+    </label>
+
+    <div class="row">
+
+      <select id="formatSelect">
+
+        <option value="mp4">
+          MP4 Video
+        </option>
+
+        <option value="mp3">
+          MP3 Audio
+        </option>
+
+      </select>
+
+      <button
+        id="downloadButton"
+        class="btn"
+        onclick="startDownload()"
+      >
+        Start Download
+      </button>
+
+    </div>
+
+    <div
+      id="downloadMessage"
+      class="hidden"
+    ></div>
+
+
+    <!-- JOB -->
+    <div
+      id="jobPanel"
+      class="hidden"
+    >
+
+      <div class="progress-wrap">
+
+        <div class="progress-top">
+
+          <span id="jobStatus">
+            Waiting...
+          </span>
+
+          <strong id="jobPercent">
+            0%
+          </strong>
+
+        </div>
+
+        <div class="progress">
+
+          <div
+            id="progressBar"
+            class="progress-bar"
+          ></div>
+
+        </div>
+
+      </div>
+
+
+      <div class="job-info">
+
+        <div class="info-box">
+          <small>Speed</small>
+          <strong id="jobSpeed">—</strong>
+        </div>
+
+        <div class="info-box">
+          <small>ETA</small>
+          <strong id="jobEta">—</strong>
+        </div>
+
+        <div class="info-box">
+          <small>Job ID</small>
+          <strong id="jobId">—</strong>
+        </div>
+
+      </div>
+
+
+      <!-- RESULT PREVIEW -->
+      <div
+        id="preview"
+        class="preview hidden"
+      >
+
+        <h3>Result Preview</h3>
+
+        <video
+          id="videoPlayer"
+          class="hidden"
+          controls
+          preload="metadata"
+        ></video>
+
+        <audio
+          id="audioPlayer"
+          class="hidden"
+          controls
+          preload="metadata"
+        ></audio>
+
+        <div class="buttons">
+
+          <a
+            id="openFileButton"
+            class="btn secondary"
+            target="_blank"
+            rel="noopener"
+          >
+            Open File
+          </a>
+
+          <a
+            id="downloadFileButton"
+            class="btn"
+            download
+          >
+            Download File
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- API RESPONSE -->
+  <section class="card">
+
+    <h2>Latest API Response</h2>
+
+    <pre id="apiResponse">No API request yet.</pre>
+
+  </section>
+
+
+  <!-- API DOCUMENTATION -->
+  <section class="card">
+
+    <h2>API Usage</h2>
+
+    <div class="endpoint">
+      <code>GET /health</code>
+      <span>Check API, yt-dlp and FFmpeg status.</span>
+    </div>
+
+    <div class="endpoint">
+      <code>GET /api/info</code>
+      <span>Get API metadata and supported formats.</span>
+    </div>
+
+    <div class="endpoint">
+      <code>GET /api/search?q=QUERY</code>
+      <span>Search YouTube videos.</span>
+    </div>
+
+    <div class="endpoint">
+      <code>POST /api/download</code>
+      <span>Start an asynchronous MP4 or MP3 download.</span>
+    </div>
+
+    <div class="endpoint">
+      <code>GET /api/jobs/{job_id}</code>
+      <span>Check download progress and result.</span>
+    </div>
+
+    <div class="endpoint">
+      <code>GET /files/{filename}</code>
+      <span>Stream or download a completed file.</span>
+    </div>
+
+    <div class="buttons">
+
+      <a
+        class="btn secondary"
+        href="/docs"
+        target="_blank"
+        rel="noopener"
+      >
+        Open Swagger Docs
+      </a>
+
+    </div>
+
+  </section>
+
+</div>
+
+
+<script>
+
+const API_BASE = window.location.origin;
+
+let currentPollTimer = null;
+
+const $ = (id) => {
+  return document.getElementById(id);
+};
+
+
+function setResponse(data) {
+
+  try {
+
+    $("apiResponse").textContent =
+      JSON.stringify(data, null, 2);
+
+  } catch {
+
+    $("apiResponse").textContent =
+      String(data);
+
+  }
+}
+
+
+function showMessage(
+  elementId,
+  message,
+  type = ""
+) {
+
+  const element = $(elementId);
+
+  element.className =
+    "message" +
+    (type ? " " + type : "");
+
+  element.textContent =
+    message;
+
+  element.classList.remove(
+    "hidden"
+  );
+}
+
+
+function hideMessage(elementId) {
+
+  $(elementId).classList.add(
+    "hidden"
+  );
+}
+
+
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+
+function formatDuration(seconds) {
+
+  if (
+    seconds === null ||
+    seconds === undefined
+  ) {
+    return "Unknown";
+  }
+
+  seconds = Number(seconds);
+
+  if (!Number.isFinite(seconds)) {
+    return "Unknown";
+  }
+
+  const hours =
+    Math.floor(seconds / 3600);
+
+  const minutes =
+    Math.floor(
+      (seconds % 3600) / 60
+    );
+
+  const secs =
+    Math.floor(seconds % 60);
+
+  if (hours > 0) {
+
+    return (
+      hours +
+      ":" +
+      String(minutes).padStart(2, "0") +
+      ":" +
+      String(secs).padStart(2, "0")
+    );
+
+  }
+
+  return (
+    minutes +
+    ":" +
+    String(secs).padStart(2, "0")
+  );
+}
+
+
+function normalizeFileUrl(
+  fileUrl
+) {
+
+  if (!fileUrl) {
+    return "";
+  }
+
+  try {
+
+    return new URL(
+      fileUrl,
+      API_BASE
+    ).href;
+
+  } catch {
+
+    return fileUrl;
+  }
+}
+
+
+async function request(
+  url,
+  options = {}
+) {
+
+  const response =
+    await fetch(
+      url,
+      options
+    );
+
+  let data;
+
+  try {
+
+    data =
+      await response.json();
+
+  } catch {
+
+    data = {
+      success: false,
+      error: {
+        code:
+          "INVALID_RESPONSE",
+
+        message:
+          "Server returned an invalid JSON response."
+      }
+    };
+
+  }
+
+  setResponse(data);
+
+  if (!response.ok) {
+
+    let message =
+      "Request failed.";
+
+    if (
+      data &&
+      data.error
+    ) {
+
+      if (
+        typeof data.error ===
+        "string"
+      ) {
+
+        message =
+          data.error;
+
+      } else {
+
+        message =
+          data.error.message ||
+          message;
+
+      }
+
+    }
+
+    throw new Error(
+      message
+    );
+  }
+
+  return data;
+}
+
+
+async function checkHealth() {
+
+  try {
+
+    const data =
+      await request(
+        "/health"
+      );
+
+    $("healthDot")
+      .className =
+      "dot online";
+
+    $("healthText")
+      .textContent =
+      "API Online · yt-dlp " +
+      (data.yt_dlp || "unknown") +
+      " · FFmpeg " +
+      (
+        data.ffmpeg &&
+        data.ffmpeg.available
+          ? "Ready"
+          : "Unavailable"
+      );
+
+  } catch (error) {
+
+    $("healthDot")
+      .className =
+      "dot offline";
+
+    $("healthText")
+      .textContent =
+      "API Offline · " +
+      error.message;
+  }
+}
+
+
+async function searchYouTube() {
+
+  const query =
+    $("searchInput")
+      .value
+      .trim();
+
+  if (!query) {
+
+    showMessage(
+      "searchMessage",
+      "Enter a YouTube search query.",
+      "error"
+    );
+
+    return;
+  }
+
+  const button =
+    $("searchButton");
+
+  button.disabled = true;
+
+  button.textContent =
+    "Searching...";
+
+  $("results").innerHTML =
+    "";
+
+  hideMessage(
+    "searchMessage"
+  );
+
+  try {
+
+    const data =
+      await request(
+        "/api/search?q=" +
+        encodeURIComponent(query) +
+        "&limit=10"
+      );
+
+    const results =
+      data.results || [];
+
+    if (!results.length) {
+
+      showMessage(
+        "searchMessage",
+        "No YouTube results found."
+      );
+
+      return;
+    }
+
+    $("results").innerHTML =
+      results
+        .map(
+          (item, index) =>
+            createResultCard(
+              item,
+              index
+            )
+        )
+        .join("");
+
+  } catch (error) {
+
+    showMessage(
+      "searchMessage",
+      error.message,
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Search";
+  }
+}
+
+
+function createResultCard(
+  item,
+  index
+) {
+
+  const title =
+    escapeHTML(
+      item.title ||
+      "Untitled"
+    );
+
+  const channel =
+    escapeHTML(
+      item.channel ||
+      "Unknown channel"
+    );
+
+  const duration =
+    formatDuration(
+      item.duration
+    );
+
+  const thumbnail =
+    item.thumbnail
+      ? escapeHTML(
+          item.thumbnail
+        )
+      : "";
+
+  const url =
+    item.url || "";
+
+  const safeUrl =
+    escapeHTML(
+      url
+    );
+
+  return `
+    <article class="result">
+
+      ${
+        thumbnail
+          ? `
+            <img
+              class="thumbnail"
+              src="${thumbnail}"
+              alt=""
+              loading="lazy"
+            >
+          `
+          : `
+            <div class="thumbnail"></div>
+          `
+      }
+
+      <div>
+
+        <h3>
+          ${title}
+        </h3>
+
+        <div class="meta">
+          Channel: ${channel}<br>
+          Duration: ${duration}<br>
+          Video ID: ${
+            escapeHTML(
+              item.videoId || "—"
+            )
+          }
+        </div>
+
+        <div class="buttons">
+
+          <button
+            class="btn secondary"
+            onclick="useResult('${escapeAttribute(url)}', 'mp4')"
+          >
+            MP4
+          </button>
+
+          <button
+            class="btn"
+            onclick="useResult('${escapeAttribute(url)}', 'mp3')"
+          >
+            MP3
+          </button>
+
+          ${
+            safeUrl
+              ? `
+                <a
+                  class="btn secondary"
+                  href="${safeUrl}"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  YouTube
+                </a>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+    </article>
+  `;
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return String(value ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("'", "\\'")
+    .replaceAll("\n", "")
+    .replaceAll("\r", "");
+}
+
+
+function useResult(
+  url,
+  format
+) {
+
+  $("urlInput")
+    .value =
+    url;
+
+  $("formatSelect")
+    .value =
+    format;
+
+  $("urlInput")
+    .scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+}
+
+
+async function startDownload() {
+
+  const url =
+    $("urlInput")
+      .value
+      .trim();
+
+  const format =
+    $("formatSelect")
+      .value;
+
+  if (!url) {
+
+    showMessage(
+      "downloadMessage",
+      "Enter a YouTube URL.",
+      "error"
+    );
+
+    return;
+  }
+
+  const button =
+    $("downloadButton");
+
+  button.disabled = true;
+
+  button.textContent =
+    "Starting...";
+
+  hideMessage(
+    "downloadMessage"
+  );
+
+  resetPreview();
+
+  $("jobPanel")
+    .classList
+    .remove("hidden");
+
+  $("jobStatus")
+    .textContent =
+    "Creating job...";
+
+  $("jobPercent")
+    .textContent =
+    "0%";
+
+  $("progressBar")
+    .style.width =
+    "0%";
+
+  try {
+
+    const data =
+      await request(
+        "/api/download",
+        {
+          method:
+            "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              url: url,
+              format: format
+            })
+        }
+      );
+
+    if (!data.job_id) {
+
+      throw new Error(
+        "API did not return a job_id."
+      );
+    }
+
+    $("jobId")
+      .textContent =
+      data.job_id;
+
+    pollJob(
+      data.job_id
+    );
+
+  } catch (error) {
+
+    showMessage(
+      "downloadMessage",
+      error.message,
+      "error"
+    );
+
+  } finally {
+
+    button.disabled = false;
+
+    button.textContent =
+      "Start Download";
+  }
+}
+
+
+function resetPreview() {
+
+  $("preview")
+    .classList
+    .add("hidden");
+
+  $("videoPlayer")
+    .classList
+    .add("hidden");
+
+  $("audioPlayer")
+    .classList
+    .add("hidden");
+
+  $("videoPlayer")
+    .removeAttribute(
+      "src"
+    );
+
+  $("audioPlayer")
+    .removeAttribute(
+      "src"
+    );
+
+  $("openFileButton")
+    .removeAttribute(
+      "href"
+    );
+
+  $("downloadFileButton")
+    .removeAttribute(
+      "href"
+    );
+}
+
+
+function pollJob(
+  jobId
+) {
+
+  if (currentPollTimer) {
+
+    clearTimeout(
+      currentPollTimer
+    );
+  }
+
+  checkJob(
+    jobId
+  );
+}
+
+
+async function checkJob(
+  jobId
+) {
+
+  try {
+
+    const data =
+      await request(
+        "/api/jobs/" +
+        encodeURIComponent(
+          jobId
+        )
+      );
+
+    const progress =
+      Number(
+        data.progress || 0
+      );
+
+    const safeProgress =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          progress
+        )
+      );
+
+    $("jobStatus")
+      .textContent =
+      data.status ||
+      "unknown";
+
+    $("jobPercent")
+      .textContent =
+      safeProgress +
+      "%";
+
+    $("progressBar")
+      .style.width =
+      safeProgress +
+      "%";
+
+    $("jobSpeed")
+      .textContent =
+      data.speed ||
+      "—";
+
+    $("jobEta")
+      .textContent =
+      data.eta !== null &&
+      data.eta !== undefined
+        ? String(data.eta)
+        : "—";
+
+    if (
+      data.status ===
+      "completed"
+    ) {
+
+      handleCompletedJob(
+        data
+      );
+
+      return;
+    }
+
+    if (
+      data.status ===
+      "failed"
+    ) {
+
+      let message =
+        "Download failed.";
+
+      if (
+        data.error
+      ) {
+
+        if (
+          typeof data.error ===
+          "string"
+        ) {
+
+          message =
+            data.error;
+
+        } else {
+
+          message =
+            data.error.message ||
+            message;
+        }
+      }
+
+      showMessage(
+        "downloadMessage",
+        message,
+        "error"
+      );
+
+      return;
+    }
+
+    currentPollTimer =
+      setTimeout(
+        () => checkJob(
+          jobId
+        ),
+        1500
+      );
+
+  } catch (error) {
+
+    showMessage(
+      "downloadMessage",
+      error.message,
+      "error"
+    );
+  }
+}
+
+
+function handleCompletedJob(
+  data
+) {
+
+  const fileUrl =
+    normalizeFileUrl(
+      data.file_url
+    );
+
+  if (!fileUrl) {
+
+    showMessage(
+      "downloadMessage",
+      "Download completed, but the API did not return a file URL.",
+      "error"
+    );
+
+    return;
+  }
+
+  $("preview")
+    .classList
+    .remove("hidden");
+
+  $("openFileButton")
+    .href =
+    fileUrl;
+
+  $("downloadFileButton")
+    .href =
+    fileUrl;
+
+  if (
+    data.format ===
+    "mp3"
+  ) {
+
+    $("audioPlayer")
+      .src =
+      fileUrl;
+
+    $("audioPlayer")
+      .classList
+      .remove("hidden");
+
+  } else {
+
+    $("videoPlayer")
+      .src =
+      fileUrl;
+
+    $("videoPlayer")
+      .classList
+      .remove("hidden");
+  }
+
+  showMessage(
+    "downloadMessage",
+    "Download completed successfully.",
+    "success"
+  );
+}
+
+
+$("searchInput")
+  .addEventListener(
+    "keydown",
+    (event) => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        searchYouTube();
+      }
+    }
+  );
+
+
+$("urlInput")
+  .addEventListener(
+    "keydown",
+    (event) => {
+
+      if (
+        event.key ===
+        "Enter"
+      ) {
+
+        startDownload();
+      }
+    }
+  );
+
+
+$("baseUrl")
+  .textContent =
+  API_BASE;
+
+
+checkHealth();
+
+</script>
+
+</body>
+</html>
