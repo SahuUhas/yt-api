@@ -5,7 +5,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     STORAGE_DIR=/data \
     MAX_FILE_AGE_SECONDS=1800 \
-    MAX_CONCURRENT_DOWNLOADS=4
+    MAX_CONCURRENT_DOWNLOADS=2 \
+    SEARCH_CACHE_TTL_SECONDS=60 \
+    MAX_SEARCH_RESULTS=10 \
+    MAX_JOBS=500
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -21,7 +24,7 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
 
 COPY main.py .
-COPY templates ./templates
+COPY index.html .
 
 RUN mkdir -p /data \
     && useradd \
