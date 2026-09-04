@@ -24,7 +24,7 @@ AUTHOR = "SAHU UHAS"
 HOST = os.getenv("HOST", "0.0.0.0")
 PORT = int(os.getenv("PORT", os.getenv("SERVER_PORT", "30127")))
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 INDEX_FILE = BASE_DIR / "index.html"
 
 STORAGE_DIR = Path(
@@ -1340,21 +1340,6 @@ async def get_job(
         "JOB_NOT_FOUND",
         "Download job not found."
     )
-
-
-def delete_file_after_response(
-    path: Path
-):
-
-    try:
-
-        path.unlink(
-            missing_ok=True
-        )
-
-    except OSError:
-
-        pass
 
 
 @app.get(
